@@ -1,13 +1,25 @@
 "use client"
 import React from 'react'
-import Link from 'next/link'
 import { motion } from 'motion/react'
+import { useCart } from '@/context/CartContext'
 
-const plans = [
+interface PlanTier {
+  id: number
+  name: string
+  tagline: string
+  price: number
+  volume: string
+  features: string[]
+  popular: boolean
+  cta: string
+}
+
+const plans: PlanTier[] = [
   {
+    id: 101,
     name: "Discovery Tier",
     tagline: "The Olfactory Journey",
-    price: "750 EGP",
+    price: 750,
     volume: "5 x 10ml Decants",
     features: [
       "Amber & Velvet Woods sample",
@@ -20,9 +32,10 @@ const plans = [
     cta: "Order Discovery Set"
   },
   {
+    id: 102,
     name: "Signature Flacon",
     tagline: "The Full Sukoon Presence",
-    price: "1,850 EGP",
+    price: 1850,
     volume: "100ml Eau de Parfum",
     features: [
       "Numbered handcrafted glass bottle",
@@ -35,9 +48,10 @@ const plans = [
     cta: "Acquire Signature"
   },
   {
+    id: 103,
     name: "Private Bespoke",
     tagline: "The Collector's Vault",
-    price: "3,400 EGP",
+    price: 3400,
     volume: "Double Reserve Duo (2 x 100ml)",
     features: [
       "Two flacons of private maceration",
@@ -52,6 +66,17 @@ const plans = [
 ]
 
 const WebPlans = () => {
+  const { addToCart } = useCart()
+
+  const handleAcquire = (plan: PlanTier) => {
+    addToCart({
+      id: plan.id,
+      title: `${plan.name} (${plan.tagline})`,
+      price: plan.price,
+      volume: plan.volume
+    })
+  }
+
   return (
     <section className="py-24 bg-[#F8F6F0]">
       <div className="container mx-auto px-6">
@@ -101,7 +126,7 @@ const WebPlans = () => {
                 </p>
 
                 <div className="flex items-baseline gap-2 pb-6 border-b border-white/10 mb-6">
-                  <span className="text-3xl font-light tracking-tight">{plan.price}</span>
+                  <span className="text-3xl font-light tracking-tight">{plan.price.toLocaleString()} EGP</span>
                   <span className={`text-xs ${plan.popular ? 'text-[#9E9B97]' : 'text-[#736E65]'}`}>/ edition</span>
                 </div>
 
@@ -116,16 +141,17 @@ const WebPlans = () => {
               </div>
 
               <div className="pt-8">
-                <Link
-                  href="/posts"
-                  className={`block w-full py-3.5 rounded-full text-center text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 ${
+                <button
+                  type="button"
+                  onClick={() => handleAcquire(plan)}
+                  className={`w-full py-3.5 rounded-full text-center text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 cursor-pointer ${
                     plan.popular
                       ? 'bg-[#C2A379] text-[#121212] hover:bg-white hover:text-black shadow-md'
                       : 'bg-[#121212] text-[#F8F6F0] hover:bg-[#8C6F48]'
                   }`}
                 >
                   {plan.cta}
-                </Link>
+                </button>
               </div>
             </motion.div>
           ))}

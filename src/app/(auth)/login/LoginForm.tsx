@@ -1,13 +1,17 @@
 'use client'
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { FaGoogle, FaGithub } from 'react-icons/fa'
+import { useAuth } from '@/context/AuthContext'
 
 const LoginForm = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+  const router = useRouter()
+  const { login } = useAuth()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -16,13 +20,20 @@ const LoginForm = () => {
       return
     }
 
-    // المنطق الخاص بالدخول (API Call)
-    toast.success('Welcome to Sukoon')
+    // Login process
+    login(email)
+    toast.success('Welcome back to Sukoon Sanctuary')
+    router.push('/')
+  }
+
+  const handleSocialAuth = (provider: string) => {
+    login(`patron@${provider.toLowerCase()}.com`, `${provider} Patron`)
+    toast.success(`Signed in with ${provider}`)
+    router.push('/')
   }
 
   return (
     <form className="flex flex-col gap-5 text-left" onSubmit={handleSubmit}>
-      {/* Email Field */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] uppercase tracking-[0.15em] text-[#121212] font-medium" htmlFor="email">
           Email Address
@@ -37,7 +48,6 @@ const LoginForm = () => {
         />
       </div>
 
-      {/* Password Field */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <label className="text-[11px] uppercase tracking-[0.15em] text-[#121212] font-medium" htmlFor="password">
@@ -57,7 +67,6 @@ const LoginForm = () => {
         />
       </div>
 
-      {/* Remember Me Checkbox */}
       <div className="flex items-center text-xs text-[#736E65]">
         <label className="inline-flex items-center gap-2 cursor-pointer select-none">
           <input
@@ -70,7 +79,6 @@ const LoginForm = () => {
         </label>
       </div>
 
-      {/* Submit Button */}
       <button
         type="submit"
         className="w-full py-3.5 rounded-full bg-[#121212] text-[#F8F6F0] text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#8C6F48] transition-all duration-300 shadow-sm mt-1 cursor-pointer"
@@ -78,18 +86,16 @@ const LoginForm = () => {
         Sign In to Sanctuary
       </button>
 
-      {/* Divider */}
       <div className="flex items-center gap-3 text-[11px] text-[#9E9B97] pt-2 uppercase tracking-wider">
         <span className="flex-1 border-t border-[#E8E3D9]" />
         <span>or enter with</span>
         <span className="flex-1 border-t border-[#E8E3D9]" />
       </div>
 
-      {/* Social Providers */}
       <div className="grid grid-cols-2 gap-3 pt-1">
         <button
           type="button"
-          onClick={() => toast.info('Connecting with Google...')}
+          onClick={() => handleSocialAuth('Google')}
           className="flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-[#E8E3D9] bg-white text-[#121212] text-xs hover:bg-[#F8F6F0] transition-colors cursor-pointer"
         >
           <FaGoogle className="text-sm" />
@@ -98,7 +104,7 @@ const LoginForm = () => {
 
         <button
           type="button"
-          onClick={() => toast.info('Connecting with GitHub...')}
+          onClick={() => handleSocialAuth('GitHub')}
           className="flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-[#E8E3D9] bg-white text-[#121212] text-xs hover:bg-[#F8F6F0] transition-colors cursor-pointer"
         >
           <FaGithub className="text-sm" />

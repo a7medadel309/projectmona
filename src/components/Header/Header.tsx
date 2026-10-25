@@ -1,18 +1,31 @@
 "use client"
-import React from 'react'
+import React, { useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import Navbar from '../Navbar/Navbar'
 import { useCart } from '@/context/CartContext'
+import { useAuth } from '@/context/AuthContext'
+
+// دوال الاشتراك وقراءة حالة الـ Client دون setState
+const emptySubscribe = () => () => {}
+const useIsMounted = () => {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,  // على المتصفح بعد الـ Hydration
+    () => false  // على السيرفر أثناء الـ SSR
+  )
+}
 
 const Header = () => {
   const { totalItems, setIsCartOpen } = useCart()
+  const { user, logout, isAuthenticated } = useAuth()
+  const isMounted = useIsMounted()
 
   return (
     <header className="fixed top-0 left-0 w-full bg-[#F8F6F0]/80 backdrop-blur-md border-b border-[#E8E3D9] z-40 transition-all">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           
-          {/* Brand Logo */}
+          {/* Logo */}
           <Link href="/" className="flex flex-col items-start group">
             <span className="text-2xl font-light tracking-[0.35em] text-[#121212] uppercase transition-colors group-hover:text-[#8C6F48]">
               SUKOON
@@ -22,13 +35,13 @@ const Header = () => {
             </span>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Navigation */}
           <Navbar />
           
-          {/* Action Area */}
+          {/* Actions */}
           <div className="flex items-center space-x-6">
             
-            {/* Cart Button */}
+            {/* Cart Icon */}
             <button
               onClick={() => setIsCartOpen(true)}
               className="relative p-2 text-[#121212] hover:text-[#8C6F48] transition-colors cursor-pointer"
@@ -39,26 +52,48 @@ const Header = () => {
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
-              {totalItems > 0 && (
+              {isMounted && totalItems > 0 && (
                 <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-[#8C6F48] text-white text-[9px] font-semibold flex items-center justify-center">
                   {totalItems}
                 </span>
               )}
             </button>
 
-            <Link 
-              href="/login" 
-              className="hidden md:inline-block text-xs uppercase tracking-[0.2em] text-[#121212] hover:text-[#C2A379] transition-colors"
-            >
-              Sign In
-            </Link>
+            {/* Auth Actions Protected from Hydration Mismatch */}
+            {!isMounted ? (
+              <div className="w-24 h-8" />
+            ) : isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/profile"
+                  className="text-xs uppercase tracking-[0.15em] text-[#121212] font-medium hover:text-[#8C6F48]"
+                >
+                  {user?.name}
+                </Link>
+                <button
+                  onClick={logout}
+                  className="text-xs uppercase tracking-[0.15em] text-[#736E65] hover:text-red-600 transition-colors cursor-pointer"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-6">
+                <Link 
+                  href="/register" 
+                  className="hidden md:inline-block text-xs uppercase tracking-[0.2em] text-[#121212] hover:text-[#C2A379] transition-colors"
+                >
+                  Join Us
+                </Link>
 
-            <Link 
-              href="/register" 
-              className="hidden md:inline-block text-xs uppercase tracking-[0.2em] px-6 py-2.5 rounded-full bg-[#121212] text-[#F8F6F0] hover:bg-[#8C6F48] transition-all duration-300 shadow-sm"
-            >
-              Join Us
-            </Link>
+                <Link 
+                  href="/login" 
+                  className="hidden md:inline-block text-xs uppercase tracking-[0.2em] px-6 py-2.5 rounded-full bg-[#121212] text-[#F8F6F0] hover:bg-[#8C6F48] transition-all duration-300 shadow-sm"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
           </div>
 
         </div>

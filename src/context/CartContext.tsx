@@ -24,15 +24,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>([
-    {
-      id: 1,
-      title: "Amber & Velvet Woods",
-      price: 1850,
-      volume: "100ml Flacon",
-      quantity: 1,
-    }
-  ])
+  const [cart, setCart] = useState<CartItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {

@@ -1,11 +1,12 @@
 "use client"
+import React from "react";
 import Link from "next/link";
-import { Tpost } from "@/utilis/types";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
+import { InventoryItem } from "@/context/InventoryContext";
 
 interface IPostProps {
-  post: Tpost;
+  post: InventoryItem;
 }
 
 const PostItem = ({ post }: IPostProps) => {
@@ -15,8 +16,8 @@ const PostItem = ({ post }: IPostProps) => {
     addToCart({
       id: post.id,
       title: post.title,
-      price: 1850,
-      volume: "100ml Eau de Parfum",
+      price: post.price,
+      volume: post.volume,
     });
   };
 
@@ -27,24 +28,24 @@ const PostItem = ({ post }: IPostProps) => {
       className="p-6 bg-white border border-[#E8E3D9] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all flex flex-col justify-between"
     >
       <div>
-        {/* Placeholder / Bottle Visual Tag */}
-        <div className="w-full h-44 rounded-xl bg-[#F8F6F0] flex flex-col items-center justify-center mb-5 border border-[#E8E3D9]/60 relative group">
-          <span className="text-[11px] tracking-[0.25em] text-[#8C6F48] uppercase font-sans">
-            Sukoon Private Reserve
+        <div className="w-full h-44 rounded-xl bg-[#F8F6F0] flex flex-col items-center justify-center mb-5 border border-[#E8E3D9]/60 relative">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C6F48] font-semibold">
+            {post.brand}
           </span>
-          <span className="text-[10px] text-[#9E9B97] mt-1 font-mono">100ml Flacon</span>
+          <span className="text-xs text-[#121212] font-serif italic mt-1">{post.title}</span>
+          <span className="text-[10px] text-[#9E9B97] mt-1 font-mono">{post.volume}</span>
         </div>
 
-        <h2 className="text-lg font-medium text-[#121212] line-clamp-1 mb-2 hover:text-[#8C6F48] transition-colors">
+        <h2 className="text-lg font-medium text-[#121212] line-clamp-1 mb-1.5 hover:text-[#8C6F48] transition-colors">
           {post.title}
         </h2>
         
-        <p className="text-sm text-[#736E65] line-clamp-2 leading-relaxed font-light mb-4">
-          {post.body}
+        <p className="text-xs text-[#736E65] line-clamp-2 leading-relaxed font-light mb-4">
+          {post.body || post.accords}
         </p>
 
-        <p className="text-base font-medium text-[#121212] mb-4">
-          1,850 EGP
+        <p className="text-base font-semibold text-[#121212] mb-4" suppressHydrationWarning>
+          {post.price.toLocaleString()} EGP
         </p>
       </div>
 
