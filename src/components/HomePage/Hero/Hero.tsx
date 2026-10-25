@@ -8,7 +8,7 @@ const Hero = () => {
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center pt-24 pb-12 overflow-hidden">
       {/* Ambient background glow */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#EDE7DC]/60 via-[#F8F6F0] to-[#F8F6F0]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-[#EDE7DC]/60 via-[#F8F6F0] to-[#F8F6F0]" />
 
       <div className="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
         
@@ -43,7 +43,7 @@ const Hero = () => {
               Explore Collection
             </Link>
             <Link
-              href="/contact"
+              href="/about"
               className="px-8 py-3.5 rounded-full border border-[#C2A379] text-[#121212] text-xs uppercase tracking-[0.2em] hover:bg-[#EDE7DC] transition-all duration-300"
             >
               Our Story
@@ -78,7 +78,7 @@ const Hero = () => {
                 width={480} 
                 height={550}
                 priority
-                className="rounded-2xl object-cover max-h-[460px] w-auto shadow-inner"
+                className="rounded-2xl object-cover max-h-115 w-auto shadow-inner"
               />
             </div>
             
