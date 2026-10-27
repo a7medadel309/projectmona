@@ -1,142 +1,143 @@
 'use client'
-import React, { useState, useSyncExternalStore } from 'react'
-import { motion } from 'framer-motion'
-import { toast } from 'react-toastify'
+import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useInventory } from '@/context/InventoryContext'
 
-const emptySubscribe = () => () => {}
-const useIsMounted = () => {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  )
-}
-
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'create'>('inventory')
-  const { activeInventory, addEdition, archiveEdition, updatePrice, toggleStatus } = useInventory()
-  const isMounted = useIsMounted()
+  const { inventory, archiveEdition } = useInventory()
 
-  // Form State
-  const [brand, setBrand] = useState('Sukoon Private')
-  const [editionName, setEditionName] = useState('')
-  const [accords, setAccords] = useState('')
-  const [price, setPrice] = useState('')
-  const [volume, setVolume] = useState('100ml')
-  const [status, setStatus] = useState<'In Stock' | 'Low Reserve' | 'Out of Stock'>('In Stock')
+  const [editingItem, setEditingItem] = useState<{ id: number; title: string; price: number } | null>(null)
+  const [newPrice, setNewPrice] = useState<string>('')
 
-  const handleEditPrice = (id: number, currentPrice: number, title: string) => {
-    const newPriceStr = prompt(`Set new retail price for ${title} (EGP):`, currentPrice.toString())
-    if (!newPriceStr) return
-    const newPrice = parseInt(newPriceStr, 10)
-    if (isNaN(newPrice) || newPrice <= 0) {
-      toast.error('Invalid price entered')
-      return
+  const handleOpenEdit = (item: { id: number; title: string; price: number }) => {
+    setEditingItem({ id: Number(item.id), title: item.title, price: item.price })
+    setNewPrice(item.price.toString())
+  }
+
+  const handleSavePrice = () => {
+    if (editingItem && newPrice && !isNaN(Number(newPrice))) {
+      setEditingItem(null)
     }
-    updatePrice(id, newPrice)
   }
 
-  const handleCreateEdition = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editionName || !price || !accords) {
-      toast.error('Please complete all formulation details')
-      return
-    }
-
-    addEdition({
-      brand,
-      title: editionName,
-      body: accords,
-      accords,
-      price: parseInt(price, 10),
-      volume,
-      status,
-    })
-
-    setEditionName('')
-    setAccords('')
-    setPrice('')
-    setBrand('Sukoon Private')
-    setActiveTab('inventory')
-  }
-
-  if (!isMounted) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <span className="text-xs uppercase tracking-[0.25em] text-[#8C6F48] font-mono animate-pulse">
-          Loading Atelier Inventory...
-        </span>
-      </div>
-    )
-  }
+  const totalUnits = inventory.length * 28
+  const totalValue = inventory.reduce((acc, curr) => acc + (curr.price || 0), 0)
 
   return (
-    <div className="space-y-8">
-      {/* View Switcher */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 bg-white p-1 rounded-full border border-[#E8E3D9] shadow-xs">
-          <button
-            onClick={() => setActiveTab('inventory')}
-            className={`px-5 py-2 rounded-full text-xs uppercase tracking-[0.15em] transition-all cursor-pointer ${
-              activeTab === 'inventory'
-                ? 'bg-[#121212] text-white shadow-xs'
-                : 'text-[#736E65] hover:text-[#121212]'
-            }`}
-          >
-            Active Reserves ({activeInventory.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('create')}
-            className={`px-5 py-2 rounded-full text-xs uppercase tracking-[0.15em] transition-all cursor-pointer ${
-              activeTab === 'create'
-                ? 'bg-[#121212] text-white shadow-xs'
-                : 'text-[#736E65] hover:text-[#121212]'
-            }`}
-          >
-            + New Edition
-          </button>
+    <div className="space-y-6 px-4 md:px-8 pb-16 max-w-7xl mx-auto pt-2">
+      {/* Action / Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <button className="px-5 py-2.5 rounded-full bg-[#121212] text-white text-xs uppercase tracking-widest font-mono whitespace-nowrap min-h-[42px]">
+          Active Reserves ({inventory.length})
+        </button>
+        <button className="px-5 py-2.5 rounded-full bg-white border border-[#E8E3D9] text-[#121212] text-xs uppercase tracking-widest font-mono whitespace-nowrap hover:bg-[#F8F6F0] min-h-[42px] transition-colors">
+          + New Edition
+        </button>
+      </div>
+
+      {/* Top Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E8E3D9] shadow-xs">
+          <span className="text-[10px] tracking-wider uppercase text-[#736E65] font-mono block">
+            Active Reserves
+          </span>
+          <span className="text-lg sm:text-2xl font-light text-[#121212] mt-1 block">
+            {inventory.length} Extracts
+          </span>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E8E3D9] shadow-xs">
+          <span className="text-[10px] tracking-wider uppercase text-[#736E65] font-mono block">
+            Total Flacons
+          </span>
+          <span className="text-lg sm:text-2xl font-light text-[#121212] mt-1 block">
+            {totalUnits} Units
+          </span>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E8E3D9] shadow-xs">
+          <span className="text-[10px] tracking-wider uppercase text-[#736E65] font-mono block">
+            Pending Orders
+          </span>
+          <span className="text-lg sm:text-2xl font-light text-[#121212] mt-1 block">
+            18 Dispatches
+          </span>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E8E3D9] shadow-xs">
+          <span className="text-[10px] tracking-wider uppercase text-[#736E65] font-mono block">
+            Inventory Value
+          </span>
+          <span className="text-lg sm:text-2xl font-light text-[#121212] mt-1 block">
+            {totalValue.toLocaleString()} EGP
+          </span>
         </div>
       </div>
 
-      {/* Dynamic Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-5 bg-white rounded-2xl border border-[#E8E3D9] shadow-xs">
-          <p className="text-[10px] uppercase tracking-wider text-[#736E65]">Active Reserves</p>
-          <p className="text-2xl font-light text-[#121212] mt-1" suppressHydrationWarning>
-            {activeInventory.length} Extracts
-          </p>
+      {/* Active Formulations Section */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-light text-[#121212]">Active Formulations</h2>
+          <span className="text-xs text-[#736E65] font-mono">Live In Stock</span>
         </div>
-        <div className="p-5 bg-white rounded-2xl border border-[#E8E3D9] shadow-xs">
-          <p className="text-[10px] uppercase tracking-wider text-[#736E65]">Total Flacons</p>
-          <p className="text-2xl font-light text-[#121212] mt-1" suppressHydrationWarning>
-            {activeInventory.length * 28} Units
-          </p>
-        </div>
-        <div className="p-5 bg-white rounded-2xl border border-[#E8E3D9] shadow-xs">
-          <p className="text-[10px] uppercase tracking-wider text-[#736E65]">Pending Orders</p>
-          <p className="text-2xl font-light text-[#8C6F48] mt-1">18 Dispatches</p>
-        </div>
-        <div className="p-5 bg-white rounded-2xl border border-[#E8E3D9] shadow-xs">
-          <p className="text-[10px] uppercase tracking-wider text-[#736E65]">Inventory Value</p>
-          <p className="text-2xl font-light text-[#121212] mt-1" suppressHydrationWarning>
-            {activeInventory.reduce((sum, item) => sum + item.price, 0).toLocaleString()} EGP
-          </p>
-        </div>
-      </div>
 
-      {/* Tab 1: Inventory Table */}
-      {activeTab === 'inventory' && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-white rounded-3xl border border-[#E8E3D9] overflow-hidden shadow-xs"
-        >
-          <div className="p-6 border-b border-[#F8F6F0] flex items-center justify-between">
-            <h3 className="text-base font-medium text-[#121212]">Active Formulations</h3>
-            <span className="text-[11px] text-[#8C6F48] font-mono">Live In Stock</span>
-          </div>
-          
+        {/* 1. Mobile Cards View */}
+        <div className="grid grid-cols-1 gap-3.5 md:hidden">
+          {inventory.map((item) => {
+            const itemRecord = item as unknown as Record<string, unknown>
+            const houseName = typeof itemRecord.house === 'string' ? itemRecord.house : 'Sukoon Edition'
+            const itemId = Number(item.id)
+
+            return (
+              <div
+                key={item.id}
+                className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E8E3D9] shadow-xs flex flex-col justify-between gap-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-[#8C6F48] tracking-wider block">
+                      {houseName}
+                    </span>
+                    <h3 className="text-base font-medium text-[#121212] mt-0.5">{item.title}</h3>
+                    <p className="text-xs text-[#736E65] mt-1 line-clamp-1">{item.accords}</p>
+                  </div>
+                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-mono rounded-full shrink-0">
+                    In Stock
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-[#F8F6F0]">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm font-semibold text-[#121212]">
+                      {item.price.toLocaleString()} EGP
+                    </span>
+                    <span className="text-[11px] font-mono text-[#736E65]">
+                      {item.volume}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleOpenEdit({ id: itemId, title: item.title, price: item.price })}
+                      className="px-3.5 py-1.5 bg-[#F8F6F0] text-[#121212] text-xs font-medium rounded-lg hover:bg-[#E8E3D9] transition-colors min-h-[38px] cursor-pointer"
+                    >
+                      Edit Price
+                    </button>
+                    <button
+                      onClick={() => archiveEdition(itemId)}
+                      className="px-3.5 py-1.5 bg-neutral-100 text-[#736E65] text-xs font-medium rounded-lg hover:bg-neutral-200 transition-colors min-h-[38px] cursor-pointer"
+                    >
+                      Archive
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* 2. Desktop Table View */}
+        <div className="hidden md:block bg-white rounded-3xl border border-[#E8E3D9] overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -151,183 +152,89 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F8F6F0] text-xs font-light">
-                {activeInventory.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-12 text-[#9E9B97]">
-                      No active formulations. Add a new edition or restore from Fragrance Archive.
-                    </td>
-                  </tr>
-                ) : (
-                  activeInventory.map((item) => (
+                {inventory.map((item) => {
+                  const itemRecord = item as unknown as Record<string, unknown>
+                  const houseName = typeof itemRecord.house === 'string' ? itemRecord.house : 'Sukoon Edition'
+                  const itemId = Number(item.id)
+
+                  return (
                     <tr key={item.id} className="hover:bg-[#F8F6F0]/40 transition-colors">
                       <td className="py-4 px-6 font-medium text-[#121212]">{item.title}</td>
-                      <td className="py-4 px-6 text-[#8C6F48] font-medium">{item.brand}</td>
-                      <td className="py-4 px-6 text-[#736E65] max-w-xs truncate">{item.accords || item.body}</td>
-                      <td className="py-4 px-6 text-[#121212] font-medium" suppressHydrationWarning>
-                        {item.price.toLocaleString()} EGP
-                      </td>
+                      <td className="py-4 px-6 text-[#736E65] font-mono text-[11px]">{houseName}</td>
+                      <td className="py-4 px-6 text-[#736E65] max-w-[220px] truncate">{item.accords}</td>
+                      <td className="py-4 px-6 text-[#121212] font-medium">{item.price.toLocaleString()} EGP</td>
                       <td className="py-4 px-6 text-[#736E65] font-mono text-[11px]">{item.volume}</td>
                       <td className="py-4 px-6">
-                        <button
-                          onClick={() => toggleStatus(item.id)}
-                          title="Click to toggle status"
-                          className="cursor-pointer"
-                        >
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-medium ${
-                            item.status === 'In Stock'
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : item.status === 'Low Reserve'
-                              ? 'bg-amber-50 text-amber-700'
-                              : 'bg-red-50 text-red-700'
-                          }`}>
-                            {item.status}
-                          </span>
-                        </button>
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-mono">
+                          In Stock
+                        </span>
                       </td>
                       <td className="py-4 px-6 text-right space-x-3">
                         <button
-                          onClick={() => handleEditPrice(item.id, item.price, item.title)}
-                          className="text-[#8C6F48] hover:underline cursor-pointer"
+                          onClick={() => handleOpenEdit({ id: itemId, title: item.title, price: item.price })}
+                          className="text-[#8C6F48] hover:underline font-medium cursor-pointer"
                         >
                           Edit Price
                         </button>
                         <button
-                          onClick={() => archiveEdition(item.id)}
-                          className="text-amber-700 hover:underline cursor-pointer"
+                          onClick={() => archiveEdition(itemId)}
+                          className="text-[#736E65] hover:underline cursor-pointer"
                         >
                           Archive
                         </button>
                       </td>
                     </tr>
-                  ))
-                )}
+                  )
+                })}
               </tbody>
             </table>
           </div>
-        </motion.div>
-      )}
+        </div>
+      </div>
 
-      {/* Tab 2: Creation Form */}
-      {activeTab === 'create' && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-white p-8 md:p-10 rounded-3xl border border-[#E8E3D9] shadow-xs max-w-2xl mx-auto"
-        >
-          <div className="border-b border-[#F8F6F0] pb-4 mb-6">
-            <h2 className="text-xl font-light text-[#121212]">Register New Formulation</h2>
-            <p className="text-xs text-[#736E65] font-light mt-1">
-              Add custom extracts directly into the maison management index and public collection
-            </p>
-          </div>
-
-          <form onSubmit={handleCreateEdition} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider text-[#121212] font-medium">
-                  House / Brand
-                </label>
-                <select
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  className="w-full px-3 py-3 rounded-xl bg-[#F8F6F0] border border-[#E8E3D9] text-xs text-[#121212] focus:outline-none focus:ring-1 focus:ring-[#8C6F48]"
-                >
-                  <option value="Sukoon Private">Sukoon Private</option>
-                  <option value="Hawas">Hawas</option>
-                  <option value="Assaf">Assaf</option>
-                  <option value="Ibraq">Ibraq</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider text-[#121212] font-medium">
-                  Edition Name
-                </label>
-                <input 
-                  type="text" 
-                  required
-                  value={editionName}
-                  onChange={(e) => setEditionName(e.target.value)}
-                  placeholder="e.g. Royal Tonka & Smoked Cedar" 
-                  className="w-full px-4 py-3 rounded-xl bg-[#F8F6F0] border border-[#E8E3D9] text-xs text-[#121212] focus:outline-none focus:ring-1 focus:ring-[#8C6F48]"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] uppercase tracking-wider text-[#121212] font-medium">
-                Olfactory Accords & Dominant Notes
-              </label>
-              <input 
-                type="text" 
-                required
-                value={accords}
-                onChange={(e) => setAccords(e.target.value)}
-                placeholder="e.g. Tonka Bean, Cedarwood, Bourbon Vanilla" 
-                className="w-full px-4 py-3 rounded-xl bg-[#F8F6F0] border border-[#E8E3D9] text-xs text-[#121212] focus:outline-none focus:ring-1 focus:ring-[#8C6F48]"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider text-[#121212] font-medium">
+      {/* Quick Edit Price Modal */}
+      <AnimatePresence>
+        {editingItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 border border-[#E8E3D9] shadow-xl"
+            >
+              <h3 className="text-base font-medium text-[#121212]">
+                Update Price: {editingItem.title}
+              </h3>
+              <div>
+                <label className="text-xs text-[#736E65] block mb-1.5 font-mono uppercase">
                   Price (EGP)
                 </label>
-                <input 
-                  type="number" 
-                  required
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="2200" 
-                  className="w-full px-4 py-3 rounded-xl bg-[#F8F6F0] border border-[#E8E3D9] text-xs text-[#121212] focus:outline-none focus:ring-1 focus:ring-[#8C6F48]"
+                <input
+                  type="number"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E3D9] text-sm focus:outline-none focus:border-[#121212]"
+                  autoFocus
                 />
               </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider text-[#121212] font-medium">
-                  Flacon Volume
-                </label>
-                <select
-                  value={volume}
-                  onChange={(e) => setVolume(e.target.value)}
-                  className="w-full px-3 py-3 rounded-xl bg-[#F8F6F0] border border-[#E8E3D9] text-xs text-[#121212] focus:outline-none focus:ring-1 focus:ring-[#8C6F48]"
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  onClick={() => setEditingItem(null)}
+                  className="px-4 py-2 text-xs text-[#736E65] hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
                 >
-                  <option value="100ml EDP">100ml EDP</option>
-                  <option value="100ml Extrait">100ml Extrait</option>
-                  <option value="50ml EDP">50ml EDP</option>
-                  <option value="Discovery Set">Discovery Set</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider text-[#121212] font-medium">
-                  Initial Status
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) =>
-                    setStatus(e.target.value as 'In Stock' | 'Low Reserve' | 'Out of Stock')
-                  }
-                  className="w-full px-3 py-3 rounded-xl bg-[#F8F6F0] border border-[#E8E3D9] text-xs text-[#121212] focus:outline-none focus:ring-1 focus:ring-[#8C6F48]"
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSavePrice}
+                  className="px-4 py-2 text-xs bg-[#121212] text-white rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
-                  <option value="In Stock">In Stock</option>
-                  <option value="Low Reserve">Low Reserve</option>
-                  <option value="Out of Stock">Out of Stock</option>
-                </select>
+                  Save Changes
+                </button>
               </div>
-            </div>
-
-            <div className="pt-3">
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-full bg-[#121212] text-[#F8F6F0] text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#8C6F48] transition-all cursor-pointer shadow-sm"
-              >
-                Publish Edition to Archive & Collections
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
