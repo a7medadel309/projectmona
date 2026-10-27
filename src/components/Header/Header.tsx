@@ -1,13 +1,23 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 
+const emptySubscribe = () => () => {}
+const useIsMounted = () => {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
+}
+
 export default function Header() {
   const pathname = usePathname()
+  const isMounted = useIsMounted()
   const { user, isAdmin, isAuthenticated, logout } = useAuth()
   const { cart, setIsCartOpen } = useCart()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -17,7 +27,7 @@ export default function Header() {
 
   const navLinks = [
     { name: 'Collections', href: '/posts' },
-    { name: 'Story', href: '/story' },
+    { name: 'Story', href: '/about' },
     { name: 'Reviews', href: '/reviews' },
     { name: 'Contact', href: '/contact' },
   ]
@@ -53,7 +63,8 @@ export default function Header() {
             )
           })}
 
-          {isAdmin && (
+          {/* ننتظر الـ Mount عشان نمنع الـ Hydration Mismatch */}
+          {isMounted && isAdmin && (
             <Link
               href="/admin"
               className="text-[#8C6F48] hover:text-[#121212] transition-colors border border-[#8C6F48]/40 px-3 py-1 rounded-full text-[10px]"
@@ -63,7 +74,7 @@ export default function Header() {
           )}
         </nav>
 
-        {/* Action Icons (Cart, Auth/Profile, Mobile Toggle) */}
+        {/* Action Icons */}
         <div className="flex items-center gap-3">
           
           {/* Cart Bag Icon with Live Badge */}
@@ -87,39 +98,40 @@ export default function Header() {
               />
             </svg>
 
-            {totalItems > 0 && (
-            <span
-              suppressHydrationWarning
-              className="absolute -top-1 -right-1 bg-[#8C6F48] text-[#F8F6F0] text-[9px] font-mono font-medium w-4 h-4 rounded-full flex items-center justify-center border border-[#F8F6F0] shadow-xs"
-            >
-              {totalItems}
-            </span>
+            {isMounted && totalItems > 0 && (
+              <span
+                className="absolute -top-1 -right-1 bg-[#8C6F48] text-[#F8F6F0] text-[9px] font-mono font-medium w-4 h-4 rounded-full flex items-center justify-center border border-[#F8F6F0] shadow-xs"
+              >
+                {totalItems}
+              </span>
             )}
           </button>
 
           {/* User Account / Login */}
-          {isAuthenticated ? (
-            <div className="flex items-center gap-2">
+          {isMounted && (
+            isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/profile"
+                  className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-[#736E65] hover:text-[#121212] font-mono bg-white px-3 py-1.5 rounded-full border border-[#E8E3D9]"
+                >
+                  {user?.name?.split(' ')[0] || 'Patron'}
+                </Link>
+                <button
+                  onClick={logout}
+                  className="text-[10px] uppercase tracking-wider text-[#736E65] hover:text-red-600 transition-colors cursor-pointer px-2 py-1"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
               <Link
-                href="/profile"
-                className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-[#736E65] hover:text-[#121212] font-mono bg-white px-3 py-1.5 rounded-full border border-[#E8E3D9]"
+                href="/login"
+                className="text-[10px] uppercase tracking-wider bg-[#121212] text-[#F8F6F0] hover:bg-[#8C6F48] transition-colors px-4 py-1.5 rounded-full"
               >
-                {user?.name?.split(' ')[0] || 'Patron'}
+                Sign In
               </Link>
-              <button
-                onClick={logout}
-                className="text-[10px] uppercase tracking-wider text-[#736E65] hover:text-red-600 transition-colors cursor-pointer px-2 py-1"
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="text-[10px] uppercase tracking-wider bg-[#121212] text-[#F8F6F0] hover:bg-[#8C6F48] transition-colors px-4 py-1.5 rounded-full"
-            >
-              Sign In
-            </Link>
+            )
           )}
 
           {/* Mobile Menu Button */}
@@ -168,7 +180,7 @@ export default function Header() {
                 </Link>
               ))}
 
-              {isAdmin && (
+              {isMounted && isAdmin && (
                 <Link
                   href="/admin"
                   onClick={() => setMobileMenuOpen(false)}
