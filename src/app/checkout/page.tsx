@@ -3,9 +3,25 @@ import React, { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
+import { useOrders } from '@/context/OrderContext'
 import { toast } from 'react-toastify'
+import { useAuth } from '@/context/AuthContext'
 
 const emptySubscribe = () => () => {}
+type CheckoutCartItem = {
+  id: string | number
+  title: string
+  price?: number
+  volume?: string | number
+  quantity: number
+}
+
+type CheckoutCart = {
+  cart: CheckoutCartItem[]
+  totalAmount: number
+  clearCart?: () => void
+}
+
 const useIsMounted = () => {
   return useSyncExternalStore(
     emptySubscribe,
@@ -16,7 +32,11 @@ const useIsMounted = () => {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { cart, totalAmount, clearCart } = useCart()
+  const { cart, totalAmount, clearCart } = useCart() as CheckoutCart
+  const { addOrder } = useOrders()
+  const { user } = useAuth() as {
+    user?: { id?: string; email?: string; name?: string; phone?: string } | null
+  }
   const isMounted = useIsMounted()
   const [completed, setCompleted] = useState(false)
 
@@ -27,7 +47,7 @@ export default function CheckoutPage() {
   const [city, setCity] = useState('')
   const [phone, setPhone] = useState('')
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!cart || cart.length === 0) {
@@ -35,6 +55,23 @@ export default function CheckoutPage() {
       return
     }
 
+    const customerFullName = `${firstName} ${lastName}`.trim()
+    const fullDeliveryAddress = `${address}, ${city}`.trim()
+    const perfumeTitles = cart
+      .map((item: CheckoutCartItem) => `${item.title} (x${item.quantity || 1})`)
+      .join(', ')
+
+    // 1. تسجيل الطلب في Context
+    addOrder({
+      customerName: customerFullName || 'Private Client',
+      phone: phone,
+      perfumeTitle: perfumeTitles,
+      totalPrice: totalAmount,
+      userEmail: user?.email,
+      userId: user?.id,
+    })
+
+    // 2. الحفظ في localStorage
     const orderId = `SKN-${Math.floor(1000 + Math.random() * 9000)}-EG`
     const orderDate = new Date().toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -47,12 +84,15 @@ export default function CheckoutPage() {
       date: orderDate,
       status: 'Macerating',
       totalAmount: totalAmount,
+      userEmail: user?.email,
+      userId: user?.id,
       customer: {
-        name: `${firstName} ${lastName}`.trim(),
+        name: customerFullName,
         phone,
-        address: `${address}, ${city}`,
+        address: fullDeliveryAddress,
+        email: user?.email,
       },
-      items: cart.map((item) => ({
+      items: cart.map((item: CheckoutCartItem) => ({
         id: item.id,
         title: item.title,
         price: item.price,
@@ -68,7 +108,25 @@ export default function CheckoutPage() {
       console.error(err)
     }
 
-    clearCart()
+    // 3. إرسال الإشعار الفوري لموبايلك على تليجرام
+    try {
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          customerName: customerFullName,
+          phone,
+          address: fullDeliveryAddress,
+          perfumeTitle: perfumeTitles,
+          totalPrice: totalAmount,
+        }),
+      })
+    } catch (error) {
+      console.error(error)
+    }
+
+    if (clearCart) clearCart()
     setCompleted(true)
     toast.success('Order confirmed. Your flacons are being prepared.')
   }
@@ -97,13 +155,13 @@ export default function CheckoutPage() {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/profile"
-              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#121212] text-[#F8F6F0] text-xs uppercase tracking-[0.2em] hover:bg-[#8C6F48] transition-all"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#121212] text-[#F8F6F0] text-xs uppercase tracking-[0.2em] hover:bg-[#8C6F48] transition-all text-center"
             >
               View in Sanctuary
             </Link>
             <Link
               href="/posts"
-              className="w-full sm:w-auto px-6 py-3 rounded-full bg-white border border-[#E8E3D9] text-[#121212] text-xs uppercase tracking-[0.2em] hover:bg-[#F8F6F0] transition-all"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-white border border-[#E8E3D9] text-[#121212] text-xs uppercase tracking-[0.2em] hover:bg-[#F8F6F0] transition-all text-center"
             >
               Continue Journey
             </Link>
@@ -227,7 +285,7 @@ export default function CheckoutPage() {
             <h3 className="text-xs uppercase tracking-wider font-medium text-[#121212]">Order Overview</h3>
             
             <div className="space-y-3 divide-y divide-[#F8F6F0]">
-              {cart.map((item) => (
+              {cart.map((item: CheckoutCartItem) => (
                 <div key={item.id} className="pt-3 first:pt-0 flex justify-between items-center text-xs">
                   <div>
                     <p className="text-[#121212] font-medium">{item.title}</p>

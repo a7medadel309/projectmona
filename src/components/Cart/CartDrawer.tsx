@@ -36,7 +36,7 @@ export default function CartDrawer() {
               </div>
               <button
                 onClick={() => setIsCartOpen(false)}
-                className="w-9 h-9 rounded-full border border-[#E8E3D9] flex items-center justify-center text-[#736E65] hover:text-[#121212] transition-colors"
+                className="w-9 h-9 rounded-full border border-[#E8E3D9] flex items-center justify-center text-[#736E65] hover:text-[#121212] transition-colors cursor-pointer"
               >
                 ✕
               </button>
@@ -61,7 +61,7 @@ export default function CartDrawer() {
 
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-[#121212]">{item.title}</h4>
-                      <p className="text-[11px] text-[#736E65] font-light">{item.volume}</p>
+                      <p className="text-[11px] text-[#736E65] font-light">{item.volume || '100ml'}</p>
                       <p className="text-xs text-[#121212] font-semibold mt-1">
                         {item.price.toLocaleString()} EGP
                       </p>
@@ -71,14 +71,14 @@ export default function CartDrawer() {
                     <div className="flex flex-col items-end gap-2">
                       <button
                         onClick={() => removeFromCart(item.id)}
-                        className="text-[10px] text-[#9E9B97] hover:text-red-500 transition-colors"
+                        className="text-[10px] text-[#9E9B97] hover:text-red-500 transition-colors cursor-pointer"
                       >
                         Remove
                       </button>
                       <div className="flex items-center border border-[#E8E3D9] rounded-full px-2 py-0.5 bg-[#F8F6F0] text-xs">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="px-1.5 hover:text-[#8C6F48]">-</button>
+                        <button onClick={() => updateQuantity(item.id, -1)} className="px-1.5 hover:text-[#8C6F48] cursor-pointer">-</button>
                         <span className="px-2 font-medium">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="px-1.5 hover:text-[#8C6F48]">+</button>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="px-1.5 hover:text-[#8C6F48] cursor-pointer">+</button>
                       </div>
                     </div>
                   </div>
@@ -91,15 +91,15 @@ export default function CartDrawer() {
               <div className="p-6 bg-white border-t border-[#E8E3D9] space-y-4">
                 <div className="flex items-baseline justify-between text-sm">
                   <span className="text-[#736E65] font-light uppercase tracking-wider text-xs">Subtotal</span>
-                  <span className="text-xl font-light text-[#121212]">{totalAmount.toLocaleString()} EGP</span>
+                  <span className="text-xl font-light text-[#121212]">{(totalAmount || 0).toLocaleString()} EGP</span>
                 </div>
                 <p className="text-[10px] text-[#9E9B97] font-light">Complimentary white-glove shipping on domestic orders.</p>
                 <Link
                   href="/checkout"
                   onClick={() => setIsCartOpen(false)}
-                  className="block w-full py-3.5 rounded-full bg-[#121212] text-[#F8F6F0] text-xs uppercase tracking-[0.2em] font-medium text-center hover:bg-[#8C6F48] transition-all shadow-md"
+                  className="block w-full py-4 rounded-full bg-[#121212] text-[#F8F6F0] text-xs uppercase tracking-[0.2em] font-medium text-center hover:bg-[#8C6F48] transition-all shadow-md cursor-pointer"
                 >
-                  Proceed to Checkout
+                  Proceed to Reserve • {(totalAmount || 0).toLocaleString()} EGP
                 </Link>
               </div>
             )}

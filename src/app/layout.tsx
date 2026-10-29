@@ -8,7 +8,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { InventoryProvider } from "@/context/InventoryContext";
-import CartDrawer from "@/components/Cart/CartDrawer";
+import { OrderProvider } from "@/context/OrderContext";
+import { ReviewsProvider } from "@/context/ReviewsContext";
+import StorefrontShell from "@/components/StorefrontShell";
 import FloatingHomeButton from "@/components/FloatingHomeButton/FloatingHomeButton";
 
 const geistSans = Geist({
@@ -44,12 +46,17 @@ export default function RootLayout({
         <AuthProvider>
           <InventoryProvider>
             <CartProvider>
-              <Header />
-              <CartDrawer />
-              <ToastContainer position="top-right" theme="light" />
-              <main className="flex-1 flex flex-col pt-16">{children}</main>
-              <FloatingHomeButton />
-              <Footer />
+              <OrderProvider>
+                <ReviewsProvider>
+                  <Header />
+                  {/* يظهر للعميل فقط ويختفي تلقائياً في مسارات الأدمن */}
+                  <StorefrontShell />
+                  <ToastContainer position="top-right" theme="light" />
+                  <main className="flex-1 flex flex-col pt-16">{children}</main>
+                  <FloatingHomeButton />
+                  <Footer />
+                </ReviewsProvider>
+              </OrderProvider>
             </CartProvider>
           </InventoryProvider>
         </AuthProvider>

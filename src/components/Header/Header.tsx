@@ -22,6 +22,9 @@ export default function Header() {
   const { cart, setIsCartOpen } = useCart()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // إخفاء السلة إذا كنا في مسار الأدمن أو إذا كان الحساب Admin
+  const isAdminRoute = pathname?.startsWith('/admin') || (isMounted && isAdmin)
+
   // حساب إجمالي عدد القطع في السلة
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -77,35 +80,37 @@ export default function Header() {
         {/* Action Icons */}
         <div className="flex items-center gap-3">
           
-          {/* Cart Bag Icon with Live Badge */}
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="relative p-2 text-[#121212] hover:text-[#8C6F48] transition-colors cursor-pointer"
-            aria-label="Open Sanctuary Basket"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.4}
-              stroke="currentColor"
-              className="w-5 h-5"
+          {/* Cart Bag Icon: تظهر فقط للعملاء وتختفي تماماً عن الأدمن */}
+          {isMounted && !isAdminRoute && (
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative p-2 text-[#121212] hover:text-[#8C6F48] transition-colors cursor-pointer"
+              aria-label="Open Sanctuary Basket"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-              />
-            </svg>
-
-            {isMounted && totalItems > 0 && (
-              <span
-                className="absolute -top-1 -right-1 bg-[#8C6F48] text-[#F8F6F0] text-[9px] font-mono font-medium w-4 h-4 rounded-full flex items-center justify-center border border-[#F8F6F0] shadow-xs"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.4}
+                stroke="currentColor"
+                className="w-5 h-5"
               >
-                {totalItems}
-              </span>
-            )}
-          </button>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                />
+              </svg>
+
+              {totalItems > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 bg-[#8C6F48] text-[#F8F6F0] text-[9px] font-mono font-medium w-4 h-4 rounded-full flex items-center justify-center border border-[#F8F6F0] shadow-xs"
+                >
+                  {totalItems}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* User Account / Login */}
           {isMounted && (
